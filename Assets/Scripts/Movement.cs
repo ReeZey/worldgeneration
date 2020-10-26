@@ -38,53 +38,59 @@ public class Movement : MonoBehaviour
 
         if (Input.GetMouseButton(0))
         {
-            BlockChange(null);
+            BlockChange(null, true);
         }
 
         if (Input.GetMouseButton(1))
         {
-            BlockChange(tile);
+            BlockChange(tile, true);
         }
     }
 
-    private void BlockChange(TileBase block)
+    private void BlockChange(TileBase block, bool boom)
     {
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 chunkPos = toChunkVector(mousePos);
-        Dictionary<Vector2,Tilemap> test = WorldGen.GetLoadedChunks();
-
-        Tilemap map = test[chunkPos];
-
-        Vector3Int tilepos = map.WorldToCell(mousePos);
-        if(block == null || map.GetTile(tilepos) == null)
-            map.SetTile(tilepos, block);
-
-        if(WorldGen.save) SaveSystem.Save(map.GetComponent<Tilemap>());
-        /*
-         * Explosion effect
-         * 
-        Collider2D[] xd = Physics2D.OverlapCircleAll(mousePos, 10);
-        Tilemap map = getMap(xd);
-
-        if(map == null)
+        if (!boom)
         {
-            Debug.Log("no");
+            Vector2 chunkPos = toChunkVector(mousePos);
+            Dictionary<Vector2,Tilemap> test = WorldGen.GetLoadedChunks();
+
+            Tilemap map = test[chunkPos];
+
+            Vector3Int tilepos = map.WorldToCell(mousePos);
+            if(block == null || map.GetTile(tilepos) == null)
+                map.SetTile(tilepos, block);
+
+            if(WorldGen.save) SaveSystem.Save(map.GetComponent<Tilemap>());
         }
         else
         {
-            for (int i = -5; i < 5; i++)
+            foreach(Collider2D chunkC in Physics2D.OverlapCircleAll(mousePos, 10))
             {
-                for (int j = -5; j < 5; j++)
-                {
-                    if (Mathf.Abs(j) + Mathf.Abs(i) > 4)
-                        continue;
+                Tilemap map = chunkC.GetComponent<Tilemap>();
 
-                    Vector3Int tilepos = map.WorldToCell(mousePos + new Vector2(i, j));
-                    map.SetTile(tilepos, lmao);
+                if (map == null)
+                {
+                    continue;
                 }
+                else
+                {
+                    for (int i = -5; i < 5; i++)
+                    {
+                        for (int j = -5; j < 5; j++)
+                        {
+                            if (Mathf.Abs(j) + Mathf.Abs(i) > 4)
+                                continue;
+
+                            Vector3Int tilepos = map.WorldToCell(mousePos + new Vector3(i, j));
+                            map.SetTile(tilepos, block);
+                        }
+                    }
+                }
+                if (WorldGen.save) SaveSystem.Save(map.GetComponent<Tilemap>());
             }
         }
-        */
+
     }
 
     private Vector2 toChunkVector(Vector2 vec)
